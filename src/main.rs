@@ -1,8 +1,10 @@
+use filetime::{set_file_times, FileTime};
 use std::{
     env,
     fs::{self, File},
     path::PathBuf,
     process::exit,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -70,6 +72,10 @@ fn create(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             }
         } else if !arg.exists() {
             File::create(arg)?;
+        } else if arg.exists() {
+            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+            let ft = FileTime::from_unix_time(now.as_secs() as i64, now.subsec_nanos());
+            set_file_times(arg, ft, ft)?;
         }
     }
     Ok(())
